@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+  // Remove this line if you have it:
+  // output   = "./app/generated/prisma"
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(SUBSCRIBER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cappers   Capper[]
+}
+
+model Capper {
+  id        String   @id @default(cuid())
+  bio       String
+  price     Float
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  picks     Pick[]
+}
+
+model Pick {
+  id          String   @id @default(cuid())
+  content     String
+  sharedLink  String?      // <== Add this for betting app links
+  confidence  Int
+  notes       String?
+  capperId    String
+  capper      Capper   @relation(fields: [capperId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Role {
+  CAPPER
+  SUBSCRIBER
+}
