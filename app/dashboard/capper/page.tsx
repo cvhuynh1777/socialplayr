@@ -1,134 +1,81 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import Sidebar from "./Sidebar";
 
-const tabs = ["Dashboard", "Profile", "Picks", "Leaderboard"];
+export default function DashboardPage() {
+  const [data, setData] = useState<{
+    activePicks: number;
+    avgConfidence: string;
+    subscribers: number;
+    totalRevenue: number;
+    recentPicks: { id: string; content: string }[];
+  } | null>(null);
 
-export default function CapperDashboard() {
-  const [activeTab, setActiveTab] = useState("Dashboard");
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await fetch("/api/capper/dashboard");
+      const result = await res.json();
+      setData(result);
+    };
+    fetchData();
+  }, []);
 
   return (
-    <div className="flex min-h-screen bg-gray-900 text-white">
-      {/* Sidebar */}
-      <aside className="w-60 bg-gray-800 p-4 space-y-4">
-        <h1 className="text-2xl font-bold text-indigo-400 mb-6">SocialPlayr</h1>
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`block w-full text-left px-3 py-2 rounded-lg ${
-              activeTab === tab
-                ? "bg-indigo-500 text-white"
-                : "hover:bg-gray-700 text-gray-300"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </aside>
+    <div className="flex min-h-screen bg-gray-900 text-gray-200 font-sans">
+      <Sidebar />
+      <main className="flex-1 p-8">
+        <h2 className="text-4xl font-bold mb-6 text-white">
+          Welcome back, Capper!
+        </h2>
 
-      {/* Main content */}
-      <main className="flex-1 p-6">
-        {activeTab === "Dashboard" && <Dashboard />}
-        {activeTab === "Profile" && <Profile />}
-        {activeTab === "Picks" && <Picks />}
-        {activeTab === "Leaderboard" && <Leaderboard />}
+        {!data ? (
+          <p className="text-gray-400 text-lg">Loading dashboard...</p>
+        ) : (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <StatCard title="Active Picks" value={data.activePicks} />
+              <StatCard title="Avg Confidence" value={data.avgConfidence} />
+              <StatCard title="Subscribers" value={data.subscribers} />
+              <StatCard
+                title="Total Revenue"
+                value={`$${data.totalRevenue}`}
+              />
+            </div>
+
+            {/* Recent Picks */}
+            <div>
+              <h3 className="text-2xl font-bold mb-4 text-blue-400">
+                Recent Picks
+              </h3>
+              {data.recentPicks?.length > 0 ? (
+                <ul className="space-y-3">
+                  {data.recentPicks.map((pick) => (
+                    <li
+                      key={pick.id}
+                      className="p-4 bg-gray-800 rounded-xl border border-gray-700 hover:bg-gray-700 transition"
+                    >
+                      {pick.content}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-400">No recent picks found.</p>
+              )}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
 }
 
-function Dashboard() {
-  return <div className="text-3xl font-bold">Welcome, Capper!</div>;
-}
-
-function Profile() {
-  const [bio, setBio] = useState("");
-  const [price, setPrice] = useState("");
-  const userId = "your_user_id_here"; // Replace with session user.id
-
-  const saveProfile = async () => {
-    await fetch("/api/capper/profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bio, price: parseFloat(price), userId })
-    });
-  };
-
+function StatCard({ title, value }: { title: string; value: any }) {
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Edit Profile</h2>
-      <textarea
-        value={bio}
-        onChange={(e) => setBio(e.target.value)}
-        placeholder="Your bio..."
-        className="w-full p-2 rounded bg-gray-700"
-      />
-      <input
-        type="number"
-        value={price}
-        onChange={(e) => setPrice(e.target.value)}
-        placeholder="Subscription Price"
-        className="w-full p-2 rounded bg-gray-700"
-      />
-      <button
-        onClick={saveProfile}
-        className="px-4 py-2 bg-indigo-500 rounded hover:bg-indigo-600"
-      >
-        Save
-      </button>
-    </div>
-  );
-}
-
-function Picks() {
-  const [picks, setPicks] = useState([]);
-
-  useEffect(() => {
-    fetch("/api/capper/picks")
-      .then((res) => res.json())
-      .then((data) => setPicks(data.picks));
-  }, []);
-
-  return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">Your Picks</h2>
-      <ul className="space-y-3">
-        {picks.map((p) => (
-          <li
-            key={p.id}
-            className="p-4 rounded bg-gray-800 border border-gray-700"
-          >
-            {p.content}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function Leaderboard() {
-  const [board, setBoard] = useState([]);
-
-  useEffect(() => {
-    fetch("/api/leaderboard")
-      .then((res) => res.json())
-      .then((data) => setBoard(data.leaderboard));
-  }, []);
-
-  return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">Leaderboard (ROI)</h2>
-      <ul className="space-y-3">
-        {board.map((c, i) => (
-          <li key={i} className="p-4 rounded bg-gray-800 border border-gray-700">
-            <p className="font-semibold">
-              #{i + 1} - {c.capperName}
-            </p>
-            <p className="text-gray-400">ROI: {c.roi}%</p>
-          </li>
-        ))}
-      </ul>
+    <div className="bg-gray-800 p-6 rounded-xl shadow-md hover:bg-gray-700 transition">
+      <p className="text-blue-300 text-sm mb-1">{title}</p>
+      <p className="text-3xl font-bold text-white">{value}</p>
     </div>
   );
 }
