@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-const TEST_CAPPER_ID = "cmcqr7rot005tw89k6jzv0cku"; // Replace this later with session.user.id
+const TEST_CAPPER_ID = "cmcsj26ez00078o6f5cvftc10"; // Replace this later with session.user.id
 
 // GET: Fetch picks for current capper only
 export async function GET() {

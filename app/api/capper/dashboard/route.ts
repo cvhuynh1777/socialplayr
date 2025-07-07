@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-const TEST_USER_ID = "cmcqr7ros005rw89khqx5uqvr";
+const TEST_USER_ID = "cmcsj26ey00058o6fxischwb1";
 
 export async function GET() {
   try {

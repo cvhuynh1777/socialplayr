@@ -1,9 +1,9 @@
+
 generator client {
   provider = "prisma-client-js"
   // Remove this line if you have it:
   // output   = "./app/generated/prisma"
 }
-
 
 datasource db {
   provider = "postgresql"
@@ -19,7 +19,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cappers   Capper[]
+  cappers       Capper[]
+  subscriptions Subscription[] @relation("SubscriberSubscriptions")
 }
 
 model Capper {
@@ -31,19 +32,32 @@ model Capper {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  picks     Pick[]
+  picks         Pick[]
+  subscriptions Subscription[] // 👈 Add this line
 }
 
 model Pick {
-  id          String   @id @default(cuid())
-  content     String
-  sharedLink  String?      // <== Add this for betting app links
-  confidence  Int
-  notes       String?
-  capperId    String
-  capper      Capper   @relation(fields: [capperId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  content    String
+  sharedLink String? // <== Add this for betting app links
+  confidence Int
+  notes      String?
+  capperId   String
+  capper     Capper   @relation(fields: [capperId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Subscription {
+  id           String   @id @default(cuid())
+  subscriberId String
+  capperId     String
+  createdAt    DateTime @default(now())
+
+  subscriber User   @relation("SubscriberSubscriptions", fields: [subscriberId], references: [id])
+  capper     Capper @relation(fields: [capperId], references: [id])
+
+  @@unique([subscriberId, capperId])
 }
 
 enum Role {
