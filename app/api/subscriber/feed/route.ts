@@ -1,19 +1,10 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-const TEST_SUBSCRIBER_ID = "cmcsj26ev00008o6f8g8r00q1";
+const TEST_SUBSCRIBER_ID = "cmcsmr0dm00008obnymtxjfy9";
 
 export async function GET() {
   try {
-    const subscriber = await prisma.user.findUnique({
-      where: { id: TEST_SUBSCRIBER_ID },
-    });
-
-    if (!subscriber) {
-      console.warn(`Subscriber not found: ${TEST_SUBSCRIBER_ID}`);
-      return NextResponse.json({ picks: [], message: "Subscriber not found" });
-    }
-
     const subscriptions = await prisma.subscription.findMany({
       where: { subscriberId: TEST_SUBSCRIBER_ID },
       select: { capperId: true },
@@ -22,18 +13,13 @@ export async function GET() {
     const capperIds = subscriptions.map((sub) => sub.capperId);
 
     if (capperIds.length === 0) {
-      console.log(`No subscriptions found for subscriber ${TEST_SUBSCRIBER_ID}`);
-      return NextResponse.json({ picks: [], message: "No subscriptions yet" });
+      return NextResponse.json({ picks: [] });
     }
 
     const picks = await prisma.pick.findMany({
       where: { capperId: { in: capperIds } },
       include: {
-        capper: {
-          select: {
-            owner: { select: { name: true } },
-          },
-        },
+        capper: { select: { owner: { select: { name: true } } } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -41,13 +27,13 @@ export async function GET() {
     const formatted = picks.map((p) => ({
       id: p.id,
       content: p.content,
-      capperName: p.capper?.owner?.name ?? "Unknown Capper",
+      capperName: p.capper.owner.name,
       createdAt: p.createdAt,
     }));
 
     return NextResponse.json({ picks: formatted });
   } catch (error) {
-    console.error("❌ Error fetching subscriber feed:", error);
+    console.error("Error fetching subscriber feed:", error);
     return NextResponse.json(
       { error: "Failed to fetch feed" },
       { status: 500 }

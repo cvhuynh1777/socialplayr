@@ -3,69 +3,67 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Clearing existing data...");
+  console.log("🌱 Seeding database...");
+
+  // Wipe all existing data (order matters for foreign keys)
   await prisma.subscription.deleteMany();
   await prisma.pick.deleteMany();
   await prisma.capper.deleteMany();
   await prisma.user.deleteMany();
 
-  console.log("🌱 Seeding database...");
-
-  // Create 5 subscribers
+  // Create 5 Subscribers
   const subscribers = [];
   for (let i = 1; i <= 5; i++) {
     const subscriber = await prisma.user.create({
       data: {
         name: `Subscriber ${i}`,
         email: `subscriber${i}@example.com`,
-        password: "test123", // dummy password
+        password: "test123",
         role: "SUBSCRIBER",
       },
     });
     subscribers.push(subscriber);
   }
 
-  // Create 10 cappers and their picks
+  // Create 5 Cappers, each with 5 Picks
   const cappers = [];
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= 5; i++) {
     const user = await prisma.user.create({
       data: {
         name: `Capper ${i}`,
         email: `capper${i}@example.com`,
-        password: "test123", // dummy password
+        password: "test123",
         role: "CAPPER",
       },
     });
 
     const capper = await prisma.capper.create({
       data: {
-        bio: `Hi, I’m Capper ${i} and I’ve been crushing bets lately!`,
-        price: parseFloat((Math.random() * 50 + 10).toFixed(2)), // $10–$60
+        bio: `Hi, I’m Capper ${i}. Let’s win together!`,
+        price: parseFloat((Math.random() * 50 + 10).toFixed(2)),
         ownerId: user.id,
       },
     });
-    cappers.push(capper);
 
-    // Create 10 random Picks for each Capper
-    for (let j = 1; j <= 10; j++) {
+    // Add Picks for this Capper
+    for (let j = 1; j <= 5; j++) {
       await prisma.pick.create({
         data: {
-          content: `Pick #${j} by Capper ${i}`,
-          sharedLink: `https://bettingapp.com/pick/${capper.id}-${j}`, // dummy shared link
-          confidence: Math.floor(Math.random() * 5) + 1, // 1–5
-          notes: `This is test pick #${j} for Capper ${i}`,
+          content: `Pick #${j} from Capper ${i}`,
+          sharedLink: `https://example.com/pick/${capper.id}-${j}`,
+          confidence: Math.floor(Math.random() * 5) + 1,
+          notes: `Analysis for pick #${j}`,
           capperId: capper.id,
         },
       });
     }
+
+    cappers.push(capper);
   }
 
-  // Subscribe each subscriber to 3 random cappers
+  // Subscribe Subscribers to random Cappers
   for (const subscriber of subscribers) {
-    const randomCappers = cappers
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 3);
-
+    const randomCappers = cappers.sort(() => 0.5 - Math.random()).slice(0, 3);
     for (const capper of randomCappers) {
       await prisma.subscription.create({
         data: {

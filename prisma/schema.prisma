@@ -1,8 +1,5 @@
-
 generator client {
   provider = "prisma-client-js"
-  // Remove this line if you have it:
-  // output   = "./app/generated/prisma"
 }
 
 datasource db {
@@ -33,13 +30,13 @@ model Capper {
   updatedAt DateTime @updatedAt
 
   picks         Pick[]
-  subscriptions Subscription[] // 👈 Add this line
+  subscriptions Subscription[]
 }
 
 model Pick {
   id         String   @id @default(cuid())
   content    String
-  sharedLink String? // <== Add this for betting app links
+  sharedLink String?
   confidence Int
   notes      String?
   capperId   String
